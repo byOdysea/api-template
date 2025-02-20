@@ -17,7 +17,7 @@ class ExampleTable(Base):
 logger.announcement('Initializing Database Service', 'info')
 
 db_name = 'example_database'
-db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'db', f'{db_name}.db')
+db_path = os.path.join(os.path.dirname(__file__), '..', 'db', f'{db_name}.db')
 db_url = f'sqlite:///{db_path}'
 
 engine = create_engine(db_url)

@@ -101,7 +101,7 @@ def start_api():
     )
 
     # Rate limit a specific blueprint
-    limiter.limit("600 per minute")(main.bp)
+    limiter.limit("600 per minute")(database.bp)
 
     return app
 
