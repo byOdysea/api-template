@@ -2,7 +2,7 @@
 FROM python:3.9-slim
 
 # Add labels for metadata
-LABEL maintainer="aguilarcarboni"
+LABEL maintainer="MAINTAINER_NAME"
 LABEL name="api"
 LABEL version="1.0"
 LABEL description=""

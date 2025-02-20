@@ -34,8 +34,8 @@ def start_api():
     app.before_request(jwt_required)
 
     # Register Endpoints
-    from src.app import main
-    app.register_blueprint(main.bp, url_prefix='/main')
+    from src.app import database
+    app.register_blueprint(database.bp, url_prefix='/database')
 
     # Define basic routes
     @app.route('/', methods=['GET'])
