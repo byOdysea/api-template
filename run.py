@@ -108,4 +108,4 @@ def start_api():
 laserfocus = start_api()
 logger.info('Running diagnostics and tests...')
 logger.success('Diagnostics and tests completed successfully.')
-logger.announcement('Welcome to your new API.', 'success')
+logger.announcement('Welcome to your API.', 'success')
