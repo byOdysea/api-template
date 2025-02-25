@@ -2,7 +2,7 @@
 FROM python:3.9-slim
 
 # Add labels for metadata
-LABEL maintainer="MAINTAINER_NAME"
+LABEL maintainer="maintainer"
 LABEL name="api"
 LABEL version="1.0"
 LABEL description=""
@@ -19,8 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create directories for persistent storage
 RUN mkdir -p /app/src/db
 RUN mkdir -p /app/cache
-RUN mkdir -p /app/cache/websites
-RUN mkdir -p /app/cache/tv
 
 # Create volume mount points
 VOLUME /app/src/db
@@ -33,9 +31,11 @@ COPY . .
 RUN chmod +x run.sh
 
 # Set the default environment variables
+ARG JWT_SECRET_KEY
 ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
 
-ENV API_PORT=${API_PORT}
-EXPOSE ${API_PORT}
+ARG PORT
+ENV PORT=${PORT}
+EXPOSE ${PORT}
 
 ENTRYPOINT ["./run.sh"]
