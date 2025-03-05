@@ -1,7 +1,9 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
-from src.utils.database import DatabaseHandler
-from src.utils.logger import logger
+
+from laserfocus.utils.database import DatabaseHandler
+from laserfocus.utils.logger import logger
+
 import os
 
 Base = declarative_base()
