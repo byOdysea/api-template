@@ -44,4 +44,4 @@ uuid==1.30
 yfinance==0.2.37
 
 # Laserfocus
-laserfocus
+laserfocus==0.0.11

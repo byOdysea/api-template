@@ -3,109 +3,102 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, create_access_token, exceptions
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask import jsonify
 
-from laserfocus.utils.response import Response
 from laserfocus.utils.logger import logger
 
 import os
 from dotenv import load_dotenv
-
+from datetime import timedelta
 load_dotenv()
 
-def jwt_required():
-    if request.endpoint != 'login' and request.endpoint != 'index':
+public_routes = ['docs', 'index', 'login']
+
+# JWT authentication middleware
+def jwt_required_except_login():
+    if request.endpoint not in public_routes:
         try:
             verify_jwt_in_request()
         except exceptions.JWTExtendedException as e:
-            return Response.error(str(e)), 401
+            return jsonify({"msg": str(e)}), 401
 
 def start_api():
     
     logger.announcement('Starting API...', 'info')
 
-    # Initialize Flask app
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static')
     cors = CORS(app, resources={r"/*": {"origins": "*"}})
     app.config['CORS_HEADERS'] = 'Content-Type'
+    
+    # Add JWT configuration
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(milliseconds=3600000)  # 1 hour in milliseconds
     jwt = JWTManager(app)
 
-    # Register JWT before request according to some parameters
-    app.before_request(jwt_required)
+    # Initialize Limiter
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=["60 per minute"],
+        storage_uri='memory://'
+    )
 
-    # Register Endpoints
-    from src.app import database
-    app.register_blueprint(database.bp, url_prefix='/database')
+    # Apply JWT authentication to all routes except login
+    app.before_request(jwt_required_except_login)
 
-    # Define basic routes
-    @app.route('/', methods=['GET'])
+    # Developer apps
+    from src.app import databases
+    app.register_blueprint(databases.bp, url_prefix='/databases')
+
+    limiter.limit("600 per minute")(databases.bp)
+
+    # Create index route
+    @app.route('/')
     def index():
-        return Response.success('index'), 200
+        return send_from_directory('public/static', 'index.html')
     
+    # Create documentation pages
     @app.route('/docs')
     def docs():
         return send_from_directory('public/static', 'docs.html')
-
+    
+    # Create backend routes
     @app.route('/login', methods=['POST'])
     def login():
+        logger.info(f'Login request.')
         payload = request.get_json(force=True)
-        try:
-            token = payload['token']
-            logger.info(f'User attempting authentication using token: {token}')
-            if token == 'password':
-                access_token = create_access_token(identity=token)
-                logger.success(f'User authenticated. {token}.')
-                return Response.success(access_token), 200
-            else:
-                raise Exception('Invalid token')
-        except Exception as e:
-            logger.error(f'User failed to authenticate: {e}')
-            return Response.error("Invalid token"), 401
-    
-    @app.errorhandler(429)
-    def ratelimit_handler(e):
-        logger.error(f"Rate limit exceeded: {e.description}")
-        return Response.error("Rate limit exceeded"), 429
+        token = payload['token']
+        if token == os.getenv('AUTHENTICATION_TOKEN'):
+            access_token = create_access_token(identity=token)
+            return jsonify(access_token=access_token), 200
+        return jsonify({"msg": "Bad token"}), 401
 
     @app.errorhandler(404)
     def not_found_error(error):
-        logger.error(f'Not found: {error}')
-        return Response.error("Not found"), 404
+        return jsonify({"error": "Not found"}), 404
 
     @app.errorhandler(500)
     def internal_error(error):
-        logger.error(f'Internal server error: {error}')
-        return Response.error("Internal server error"), 500 
+        return jsonify({"error": "Internal server error"}), 500 
 
     @app.errorhandler(400)
     def bad_request_error(error):
-        logger.error(f'Bad request: {error}')
-        return Response.error("Bad request"), 400
+        app.logger.error(f'Bad request: {error}')
+        return jsonify({"error": "Bad request", "message": str(error)}), 400
 
     @app.errorhandler(401)
     def unauthorized_error(error):
-        logger.error(f'Unauthorized access attempt: {error}')
-        return Response.error("Unauthorized"), 401
+        app.logger.error(f'Unauthorized access attempt: {error}')
+        return jsonify({"error": "Unauthorized", "message": "Authentication required"}), 401
 
     @app.errorhandler(403)
     def forbidden_error(error):
-        logger.error(f'Forbidden access attempt: {error}')
-        return Response.error("Forbidden"), 403
-
-    # Initialize rate limiter
-    limiter = Limiter(
-        app=app,
-        key_func=get_remote_address,
-        default_limits=["84600 per day", "3600 per hour"],
-        storage_uri="memory://"
-    )
-
-    # Rate limit a specific blueprint
-    limiter.limit("600 per minute")(database.bp)
-
+        app.logger.error(f'Forbidden access attempt: {error}')
+        return jsonify({"error": "Forbidden", "message": "You don't have permission to access this resource"}), 403
+    
     return app
 
 app = start_api()
 logger.info('Running diagnostics and tests...')
 logger.success('Diagnostics and tests completed successfully.')
-logger.announcement('Welcome to your API.', 'success')
+logger.announcement('Welcome to API.', 'success')
