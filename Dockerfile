@@ -2,8 +2,8 @@
 FROM python:3.9-slim
 
 # Add labels for metadata
-LABEL maintainer="maintainer"
-LABEL name="api"
+LABEL maintainer="laserfocus"
+LABEL name="api-template"
 LABEL version="1.0"
 LABEL description=""
 
@@ -34,8 +34,12 @@ RUN chmod +x run.sh
 ARG JWT_SECRET_KEY
 ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
 
+ARG AUTHENTICATION_TOKEN
+ENV AUTHENTICATION_TOKEN=${AUTHENTICATION_TOKEN}
+
 ARG PORT
 ENV PORT=${PORT}
+
 EXPOSE ${PORT}
 
 ENTRYPOINT ["./run.sh"]
