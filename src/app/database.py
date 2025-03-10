@@ -1,73 +1,24 @@
-from flask import Blueprint, request
+from flask import request, Blueprint
 from src.components.database import db
 
 bp = Blueprint('database', __name__)
 
-"""
-Create a new record in the database
-
-Payload:
-    table: str
-    data: dict
-"""
 @bp.route('/create', methods=['POST'])
 def create_route():
     payload = request.get_json(force=True)
-    return db.create(table=payload['table'], data=payload['data'])
+    return db.create(table='template', data=payload['data'])
 
-
-"""
-Read records from the database
-
-Payload:
-    table: str
-    params: dict
-"""
 @bp.route('/read', methods=['POST'])
 def read_route():
     payload = request.get_json(force=True)
-    return db.read(table=payload['table'], params=payload['params'])
+    return db.read(table='template', params=payload['params'])
 
-"""
-Update a record in the database
-
-Payload:
-    table: str
-    params: dict
-    data: dict
-"""
 @bp.route('/update', methods=['POST'])
 def update_route():
     payload = request.get_json(force=True)
-    return db.update(table=payload['table'], params=payload['params'], data=payload['data'])
+    return db.update(table='template', params=payload['params'], data=payload['data'])
 
-"""
-Delete a record from the database
-
-Payload:
-    table: str
-    params: dict
-"""
 @bp.route('/delete', methods=['POST'])
-def delete_user_route():
+def delete_route():
     payload = request.get_json(force=True)
-    return db.delete(table=payload['table'], params=payload['params'])
-
-"""
-Get the parent lineage of a record
-
-Payload:
-    table: str
-    params: dict
-"""
-@bp.route('/get_parent_lineage', methods=['POST'])
-def get_parent_lineage_route():
-    payload = request.get_json(force=True)
-    
-    response = db.get_parent_lineage(
-        table=payload['table'], 
-        params=payload['params'], 
-        depth=3
-    )
-
-    return response
+    return db.delete(table='template', params=payload['params'])

@@ -47,10 +47,10 @@ def start_api():
     app.before_request(jwt_required_except_login)
 
     # Developer apps
-    from src.app import databases
-    app.register_blueprint(databases.bp, url_prefix='/databases')
+    from src.app import database
+    app.register_blueprint(database.bp, url_prefix='/database')
 
-    limiter.limit("600 per minute")(databases.bp)
+    limiter.limit("600 per minute")(database.bp)
 
     # Create index route
     @app.route('/')
